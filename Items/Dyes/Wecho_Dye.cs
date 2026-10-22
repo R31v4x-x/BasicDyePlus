@@ -6,7 +6,7 @@ using Terraria.ModLoader;
 
 namespace BasicDyePlus.Items.Dyes {
 	public class Wecho_Dye : ModItem {
-		public float Transparency { get; set => MathHelper.Clamp(field, 0f, 1f); } = 0f;
+		public float Transparency { get; set => MathHelper.Clamp(field, 0f, 1f); } = 0.5f;
 		public override void SetStaticDefaults() {
 			GameShaders.Armor.BindShader(Type, new ArmorShaderData(ModContent.Request<Effect>("BasicDyePlus/Effects/WechoDye"), "WechoDye"))
 				.UseOpacity(Transparency);
