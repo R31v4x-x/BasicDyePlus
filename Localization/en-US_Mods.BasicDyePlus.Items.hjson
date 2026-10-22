@@ -1,0 +1,11 @@
+Unmarked_Dye: {
+	DisplayName: Unmarked Dye
+	MixedDisplayName: "{0} and {1} Mixed Dye"
+	ComboDisplayName: "{0} and {1} Dye"
+	Tooltip: A dye with no set features
+}
+
+Wecho_Dye: {
+	DisplayName: Wecho Dye
+	Tooltip: Unaffected by {$ItemName.EchoMonolith} and {$ItemName.SpectreGoggles}
+}

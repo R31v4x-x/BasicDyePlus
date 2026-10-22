@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- Import tModLoader mod properties -->
+	<Import Project="..\tModLoader.targets" />
+
+	<!-- General -->
+	<PropertyGroup>
+	  <LangVersion>preview</LangVersion>
+	</PropertyGroup>
+
+	<!-- References -->
+	<ItemGroup>
+	  <Folder Include="Tiles\" />
+	</ItemGroup>
+	<ItemGroup>
+		<AdditionalFiles Remove=".vs\**" />
+		<Compile Remove=".vs\**" />
+		<EmbeddedResource Remove=".vs\**" />
+		<None Remove=".vs\**" />
+		<UpToDateCheckInput Remove=".vs\**" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Reference Include="ItemSourceHelper">
+	    <HintPath>..\ModAssemblies\ItemSourceHelper_v1.0.7.2.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">
+		<Exec Command="cd $(ProjectDir)\effects&#xD;&#xA;EasyXNB.exe" />
+	</Target>
+</Project>

@@ -1,0 +1,3 @@
+Allows you to combine basic color dyes in a mixing vat to create new dyes
+
+Also has a dye for custom amount of transparency
