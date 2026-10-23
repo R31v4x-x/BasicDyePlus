@@ -73,6 +73,7 @@ namespace BasicDyePlus.UI {
 
 			UIElement label = new UIText(TileItem.Get<Dye_Mixing_Vat>().DisplayName);
 			SetRectangle(label, 8, 8, label.Width.Pixels, label.Height.Pixels);
+			label.IgnoresMouseInteraction = true;
 			DyePanel.Append(label);
 
 			// UIMoneyDisplay is a fairly complicated custom UIElement. UIMoneyDisplay handles drawing some text and coin textures.
@@ -97,6 +98,12 @@ namespace BasicDyePlus.UI {
 				foreach (Item item in items) {
 					if (!item.IsAir) Main.LocalPlayer.QuickSpawnItem(item.GetSource_DropAsItem(), item, item.stack);
 				}
+				ModContent.GetInstance<Dye_Mixing_Vat_UI_System>().HideMixingUI();
+				return;
+			}
+			DyePanel.Update(gameTime);
+			for (int i = 0; i < DyeSlot.Length; i++) {
+				DyeSlot[i].Update(gameTime);
 			}
 		}
 		private static void SetRectangle(UIElement uiElement, float left, float top, float width, float height) {
@@ -155,6 +162,7 @@ namespace BasicDyePlus.UI {
 			// This causes clicks on this UIElement to not cause the player to use current items
 			if (ContainsPoint(Main.MouseScreen)) {
 				Main.LocalPlayer.mouseInterface = true;
+				Main.isMouseLeftConsumedByUI = true;
 			}
 
 			if (dragging) {
@@ -181,11 +189,34 @@ namespace BasicDyePlus.UI {
 	}
 	public class DyeSlot(Item[] items) : UIElement {
 		public int Index;
+		public override void LeftClick(UIMouseEvent evt) {
+			base.LeftClick(evt);/*
+			if (ContainsPoint(Main.MouseScreen)) {
+				if (Index == 2 && !Main.mouseItem.IsAir) return;
+				ItemSlot.LeftClick(items, ItemSlot.Context.InventoryCoin, Index);
+			}*/
+		}
+		public override void Update(GameTime gameTime) {
+			if (ContainsPoint(Main.MouseScreen)) {
+				Main.LocalPlayer.mouseInterface = true;
+				Main.isMouseLeftConsumedByUI = true;
+				if (Main.mouseItem.IsAir) {
+					if (items[Index].IsAir) {
+						Main.mouseText = true;
+						Main.hoverItemName = "Hewo";
+						Main.HoverItem = Main.LocalPlayer.HeldItem;
+					}
+				}
+				//if (Index == 2 && !Main.mouseItem.IsAir) return;
+				ItemSlot.LeftClick(items, ItemSlot.Context.EquipDye, Index);
+			}
+		}
 		protected override void DrawSelf(SpriteBatch spriteBatch) {
 			CalculatedStyle dim = GetInnerDimensions();
+			ItemSlot.Draw(spriteBatch, items, ItemSlot.Context.InventoryCoin, Index, dim.Position());
+			if (!items[Index].IsAir) return;
 			Texture2D icon = TextureAssets.Extra[ExtrasID.EquipIcons].Value;
 			Rectangle frame = icon.Frame(3, 6, 1);
-			ItemSlot.Draw(spriteBatch, items, ItemSlot.Context.InventoryCoin, Index, dim.Position());
 			spriteBatch.Draw(
 				icon,
 				dim.Position() + TextureAssets.InventoryBack.Value.Size() / 2 * Main.inventoryScale,

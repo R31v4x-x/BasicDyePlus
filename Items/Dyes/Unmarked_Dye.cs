@@ -2,6 +2,7 @@
 using Terraria;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
+using Terraria.Localization;
 using Terraria.ModLoader;
 
 namespace BasicDyePlus.Items.Dyes {
@@ -10,6 +11,14 @@ namespace BasicDyePlus.Items.Dyes {
 		public Vector3 PrimaryColor = Color.Black.ToVector3();
 		public Vector3 SecondaryColor = Color.White.ToVector3();
 		public float Saturation = 1f;
+		public ModifiedType Modified = ModifiedType.None;
+		public enum ModifiedType {
+			None = 0,
+			Mixed = 1,
+			Combo = 2
+		}
+		public override LocalizedText DisplayName => this.GetLocalization($"{Modified.ToString()}DisplayName".Replace(nameof(ModifiedType.None), string.Empty));
+		public override LocalizedText Tooltip => Modified == ModifiedType.None ? base.Tooltip : LocalizedText.Empty;
 		public override void SetStaticDefaults() {
 			GameShaders.Armor.BindShader(Type, new ArmorShaderData(Main.PixelShaderRef, "ArmorColored"))
 				.UseColor(PrimaryColor)
