@@ -1,4 +1,5 @@
-﻿using Terraria;
+﻿using System.Collections.Generic;
+using Terraria;
 using Terraria.Graphics.Shaders;
 using Terraria.ID;
 using Terraria.ModLoader;
@@ -24,6 +25,9 @@ namespace BasicDyePlus.Items.Dyes {
 		public override bool CanStack(Item source) {
 			Unmarked_Dye dye = source.ModItem as Unmarked_Dye;
 			return dye.PrimaryColor == PrimaryColor && dye.SecondaryColor == SecondaryColor && dye.Saturation == Saturation;
+		}
+		public override void ModifyTooltips(List<TooltipLine> tooltips) {
+			tooltips.Add(new(Mod, "colors", $"Primary: {PrimaryColor}, Secondary: {SecondaryColor}, Saturation: {Saturation}"));
 		}
 	}
 }

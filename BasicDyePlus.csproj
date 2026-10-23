@@ -10,9 +10,6 @@
 
 	<!-- References -->
 	<ItemGroup>
-	  <Folder Include="Tiles\" />
-	</ItemGroup>
-	<ItemGroup>
 		<AdditionalFiles Remove=".vs\**" />
 		<Compile Remove=".vs\**" />
 		<EmbeddedResource Remove=".vs\**" />
@@ -22,6 +19,9 @@
 	<ItemGroup>
 	  <Reference Include="ItemSourceHelper">
 	    <HintPath>..\ModAssemblies\ItemSourceHelper_v1.0.7.2.dll</HintPath>
+	  </Reference>
+	  <Reference Include="PegasusLib">
+	    <HintPath>..\ModAssemblies\PegasusLib_v1.1.5.dll</HintPath>
 	  </Reference>
 	</ItemGroup>
 	<Target Name="PreBuild" BeforeTargets="PreBuildEvent">

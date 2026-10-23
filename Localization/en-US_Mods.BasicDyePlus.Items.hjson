@@ -9,3 +9,8 @@ Wecho_Dye: {
 	DisplayName: Wecho Dye
 	Tooltip: Unaffected by {$ItemName.EchoMonolith} and {$ItemName.SpectreGoggles}
 }
+
+Dye_Mixing_Vat_Item: {
+	DisplayName: Dye Mixing Vat
+	Tooltip: Allows you to combine basic color dyes
+}
