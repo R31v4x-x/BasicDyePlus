@@ -25,4 +25,14 @@ namespace BasicDyePlus.Items.Dyes {
 			Transparency = 0.5f;
 		}
 	}
+	public class ModifyNPCShops : GlobalNPC {
+		public override void ModifyShop(NPCShop shop) {
+			switch (shop.NpcType) {
+				case NPCID.DyeTrader: {
+					shop.Add(ModContent.ItemType<Wecho_Dye>(), Condition.Hardmode);
+					break;
+				}
+			}
+		}
+	}
 }
