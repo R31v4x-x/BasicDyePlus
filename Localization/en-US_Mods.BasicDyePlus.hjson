@@ -1,0 +1,7 @@
+﻿UI: {
+	DyeSlots: {
+		1: Primary {$LegacyInterface.14}
+		2: Secondary {$LegacyInterface.14}
+		3: Output {$LegacyInterface.14}
+	}
+}
