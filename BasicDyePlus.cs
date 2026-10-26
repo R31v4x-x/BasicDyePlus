@@ -8,5 +8,14 @@ global using Vector4 = Microsoft.Xna.Framework.Vector4;
 using Terraria.ModLoader;
 
 namespace BasicDyePlus {
-	public class BasicDyePlus : Mod { }
+	public class BasicDyePlus : Mod {
+		public static BasicDyePlus instance;
+
+		public BasicDyePlus() {
+			instance = this;
+		}
+		public override void Unload() {
+			instance = null;
+		}
+	}
 }

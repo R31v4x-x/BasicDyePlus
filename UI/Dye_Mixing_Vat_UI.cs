@@ -1,4 +1,5 @@
-﻿using BasicDyePlus.Tiles;
+﻿using BasicDyePlus.Items.Dyes;
+using BasicDyePlus.Tiles;
 using Microsoft.Xna.Framework.Graphics;
 using System.Collections.Generic;
 using Terraria;
@@ -7,8 +8,10 @@ using Terraria.GameContent.UI.Elements;
 using Terraria.ID;
 using Terraria.Localization;
 using Terraria.ModLoader;
+using Terraria.ModLoader.UI;
 using Terraria.UI;
 using Terraria.UI.Chat;
+using static BasicDyePlus.BasicDyePlusExtension;
 
 namespace BasicDyePlus.UI {
 	public class Dye_Mixing_Vat_UI_System : ModSystem {
@@ -17,6 +20,7 @@ namespace BasicDyePlus.UI {
 
 		public void ShowMixingUI() {
 			dyeMixingInterface?.SetState(dyeMixingUI = new Dye_Mixing_UI());
+			dyeMixingUI.Activate();
 		}
 		public void HideMixingUI() {
 			foreach (Item item in dyeMixingUI.items) {
@@ -25,20 +29,13 @@ namespace BasicDyePlus.UI {
 			dyeMixingInterface?.SetState(null);
 		}
 		public override void PostSetupContent() {
-			// Create custom interface which can swap between different UIStates
 			dyeMixingInterface = new UserInterface();
-
-			// Activate calls Initialize() on the UIState if not initialized, then calls OnActivate and then calls Activate on every child element
-			dyeMixingUI.Activate();
 		}
 		public override void UpdateUI(GameTime gameTime) {
-			// Here we call .Update on our custom UI and propagate it to its state and underlying elements
 			if (dyeMixingInterface?.CurrentState != null) {
 				dyeMixingInterface?.Update(gameTime);
 			}
 		}
-		// Adding a custom layer to the vanilla layer list that will call .Draw on your interface if it has a state
-		// Setting the InterfaceScaleType to UI for appropriate UI scaling
 		public override void ModifyInterfaceLayers(List<GameInterfaceLayer> layers) {
 			int mouseTextIndex = layers.FindIndex(layer => layer.Name.Equals("Vanilla: Mouse Text"));
 			if (mouseTextIndex != -1) {
@@ -55,45 +52,53 @@ namespace BasicDyePlus.UI {
 			}
 		}
 	}
+	public enum CombineMode {
+		Mixing = (byte)0,
+		Combo = (byte)1,
+	}
 	public class Dye_Mixing_UI : UIState {
 		public DyeSlot[] DyeSlot = new DyeSlot[3];
 		public Item[] items = new Item[3];
+		public CombineMode Mode { get; set; }
 		public override void OnInitialize() {
+			#region
 			for (int i = 0; i < items.Length; i++) {
 				items[i] ??= new();
 			}
-			// Here we define our container UIElement. In DraggableUIPanel.cs, you can see that DraggableUIPanel is a UIPanel with a couple added features.
+
 			UIPanel panel = new DyePanel();
 			panel.SetPadding(8);
-			// We need to place this UIElement in relation to its Parent. Later we will be calling `base.Append(coinCounterPanel);`.
-			// This means that this class, ExampleCoinsUI, will be our Parent. Since ExampleCoinsUI is a UIState, the Left and Top are relative to the top left of the screen.
-			// SetRectangle method help us to set the position and size of UIElement
-			SetRectangle(panel, 715.60614f, 269.3318f, 209, 105);
-			panel.BackgroundColor = new Color(73, 94, 171);
+			panel.SetRectangle(715.60614f, 269.3318f, (52 * 2) + 48, 173);
 
 			LocalizedText text = TileItem.Get<Dye_Mixing_Vat>().DisplayName;
-			float padding = ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, Vector2.One * Main.inventoryScale).Y + 4;
+			Vector2 padding = ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, new Vector2(1.2f, 1) * Main.inventoryScale) + new Vector2(0, 4);
 			UIText label = new(text, 1.2f * Main.inventoryScale);
-			SetRectangle(label, 0, 0);
+			label.SetLeft(0).SetTop(0);
 			label.IgnoresMouseInteraction = true;
 			panel.Append(label);
 
-			// UIMoneyDisplay is a fairly complicated custom UIElement. UIMoneyDisplay handles drawing some text and coin textures.
-			// Organization is key to managing UI design. Making a contained UIElement like UIMoneyDisplay will make many things easier.
-			DyeSlot[0] = new DyeSlot(items) { Index = 0 };
-			SetRectangle(DyeSlot[0], 0, padding);
+			//panel.SetWidth(/*Math.Max(ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, new Vector2(1.2f, 0)).X + 8, */(52 * 2) + 48);
+
+			for (int i = 0; i < DyeSlot.Length; i++) {
+				DyeSlot[i] = new DyeSlot(items) { Index = i };
+				DyeSlot[i].Initialize();
+			}
+			DyeSlot[0].SetLeft(-28, 0.5f).SetTop(padding.Y);
+			DyeSlot[1].SetLeft(28, 0.5f).SetTop(padding.Y);
+			DyeSlot[2].SetLeft(-28, 0.5f).SetTop(padding.Y + 52 + 12);
 			panel.Append(DyeSlot[0]);
-			DyeSlot[1] = new DyeSlot(items) { Index = 1 };
-			SetRectangle(DyeSlot[1], 52 + 16, padding);
 			panel.Append(DyeSlot[1]);
-			DyeSlot[2] = new DyeSlot(items) { Index = 2 };
-			SetRectangle(DyeSlot[2], 52 * 2 + 32, padding);
 			panel.Append(DyeSlot[2]);
 
+			DyeCombine combine = new(items, Mode);
+			combine.SetLeft(28, 0.5f).SetTop(padding.Y + 52 + 12).SetWidth(52).SetHeight(26);
+			panel.Append(combine);
+			#endregion
+			DyeSwitch @switch = new(this);
+			@switch.SetLeft(28, 0.5f).SetTop(padding.Y + 52 + 12 + 26).SetWidth(52).SetHeight(26);
+			panel.Append(@switch);
+
 			Append(panel);
-			// As a recap, ExampleCoinsUI is a UIState, meaning it covers the whole screen. We attach CoinCounterPanel to ExampleCoinsUI some distance from the top left corner.
-			// We then place playButton, closeButton, and MoneyDisplay onto CoinCounterPanel so we can easily place these UIElements relative to CoinCounterPanel.
-			// Since CoinCounterPanel will move, this proper organization will move playButton, closeButton, and MoneyDisplay properly when CoinCounterPanel moves.
 		}
 		public override void Update(GameTime gameTime) {
 			if (!Main.playerInventory) {
@@ -103,13 +108,6 @@ namespace BasicDyePlus.UI {
 
 			base.Update(gameTime);
 		}
-		private static void SetRectangle(UIElement uiElement, float left, float top, float width = -1, float height = -1) {
-			uiElement.Left.Set(left * Main.inventoryScale, 0f);
-			uiElement.Top.Set(top * Main.inventoryScale, 0f);
-			if (width >= 0) uiElement.Width.Set(width * Main.inventoryScale, 0f);
-			if (height >= 0) uiElement.Height.Set(height * Main.inventoryScale, 0f);
-		}
-
 	}
 	public class DyePanel : UIPanel {
 		public override void Update(GameTime gameTime) {
@@ -124,8 +122,7 @@ namespace BasicDyePlus.UI {
 	public class DyeSlot(Item[] items) : UIElement {
 		public int Index;
 		public override void OnInitialize() {
-			Height.Set(52 * Main.inventoryScale, 0);
-			Width.Set(52 * Main.inventoryScale, 0);
+			this.SetWidth(52).SetHeight(52);
 		}
 		public override void Update(GameTime gameTime) {
 			base.Update(gameTime);
@@ -137,7 +134,7 @@ namespace BasicDyePlus.UI {
 		}
 		public void HandleItemSlot() {
 			ItemSlot.MouseHover(items, ItemSlot.Context.EquipDye, Index);
-			if (Main.mouseItem.IsAir && items[Index].IsAir) Main.hoverItemName = Language.GetTextValue($"Mods.BasicDyePlus.UI.DyeSlots.{Index}");
+			if (Main.mouseItem.IsAir && items[Index].IsAir) Main.hoverItemName = this.UILocalization(Index).Value;
 			if ((Index != 2 && Main.mouseItem.dye > 0) || Main.mouseItem.IsAir) {
 				ItemSlot.LeftClick(items, ItemSlot.Context.InventoryItem, Index);
 				ItemSlot.RightClick(items, ItemSlot.Context.InventoryItem, Index);
@@ -146,7 +143,7 @@ namespace BasicDyePlus.UI {
 
 		protected override void DrawSelf(SpriteBatch spriteBatch) {
 			CalculatedStyle dim = GetInnerDimensions();
-			ItemSlot.Draw(spriteBatch, items, ItemSlot.Context.InventoryCoin, Index, dim.Position());
+			ItemSlot.Draw(spriteBatch, items, Index == 2 ? ItemSlot.Context.ChestItem : ItemSlot.Context.InventoryCoin, Index, dim.Position());
 			if (ContainsPoint(Main.MouseScreen)) {
 				HandleItemSlot();
 			}
@@ -164,6 +161,56 @@ namespace BasicDyePlus.UI {
 				SpriteEffects.None,
 				0
 			);
+		}
+	}
+	public class DyeCombine(Item[] items, CombineMode mode) : UIButton<string>(string.Empty, 1.2f * Main.inventoryScale) {
+		public override void OnInitialize() {
+			HoverSound = SoundID.MenuTick;
+			ClickSound = SoundID.ResearchComplete;
+			HoverText = this.UILocalization($"{mode}.Tooltip").Format(UILocalization("DyeSlot.0"), UILocalization("DyeSlot.1"));
+			TooltipText = true;
+			SetText(this.UILocalization($"{mode}.DisplayName").Value);
+		}
+		public override void LeftClick(UIMouseEvent evt) {
+			bool fail = false;
+			if (ContainsPoint(Main.MouseScreen)) {
+				if (items[2].IsAir && !items[0].IsAir && !items[1].IsAir) {
+					(int, int) GetItem(Item item) {
+						return (item.type, item.stack);
+					}
+					items[2].SetDefaults(ModContent.ItemType<Unmarked_Dye>());
+					items[2].newAndShiny = true;
+					items[2].value = (ContentSamples.ItemsByType[items[0].type].value * items[0].stack) + (ContentSamples.ItemsByType[items[1].type].value * items[1].stack);
+					Unmarked_Dye dye = items[2].ModItem as Unmarked_Dye;
+					dye.PrimaryDye = GetItem(items[0]);
+					dye.SecondaryDye = GetItem(items[1]);
+					dye.PrimaryColor = Color.Red.ToVector3();
+					dye.SecondaryColor = Color.Blue.ToVector3();
+					dye.Modified = (ModifiedType)mode;
+					items[0].SetDefaults();
+					items[1].SetDefaults();
+				} else fail = true;
+			}
+
+			if (fail) ClickSound = SoundID.MenuTick;
+			else ClickSound = SoundID.ResearchComplete;
+			base.LeftClick(evt);
+		}
+	}
+	public class DyeSwitch(Dye_Mixing_UI ui) : UIButton<string>(string.Empty, 1.2f * Main.inventoryScale) {
+		public override void OnInitialize() {
+			HoverSound = SoundID.MenuTick;
+			ClickSound = SoundID.MenuTick;
+			HoverText = this.UILocalization("Tooltip").Value;
+			TooltipText = true;
+			SetText(this.UILocalization("DisplayName").Value);
+		}
+		public override void LeftClick(UIMouseEvent evt) {
+			base.LeftClick(evt);
+
+			if (ContainsPoint(Main.MouseScreen)) {
+				ui.Mode ^= CombineMode.Combo;
+			}
 		}
 	}
 }

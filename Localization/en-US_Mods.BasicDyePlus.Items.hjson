@@ -7,7 +7,13 @@ Unmarked_Dye: {
 
 Wecho_Dye: {
 	DisplayName: Wecho Dye
-	Tooltip: Unaffected by {$ItemName.EchoMonolith} and {$ItemName.SpectreGoggles}
+	Tooltip:
+		'''
+		Unaffected by {$ItemName.EchoMonolith} and {$ItemName.SpectreGoggles}
+		When used in the {$Dye_Mixing_Vat_Item.DisplayName} it'll have different effects depending on the mode
+		{$UI.DyeCombine.Mixing.DisplayName}: Reduce the saturation
+		{$UI.DyeCombine.Combo.DisplayName}: Outcome will have no color in the respective slot
+		'''
 }
 
 Dye_Mixing_Vat_Item: {

@@ -1,7 +1,24 @@
-﻿UI: {
-	DyeSlots: {
-		1: Primary {$LegacyInterface.14}
-		2: Secondary {$LegacyInterface.14}
-		3: Output {$LegacyInterface.14}
+UI: {
+	DyeSlot: {
+		0: Primary {$LegacyInterface.57}
+		1: Secondary {$LegacyInterface.57}
+		2: Output {$LegacyInterface.57}
+	}
+
+	DyeCombine: {
+		Mixing: {
+			DisplayName: Mix
+			Tooltip: Mix {0} and {1} into a single color dye
+		}
+
+		Combo: {
+			DisplayName: Combine
+			Tooltip: Combine {0} and {1} into a single multi-color dye
+		}
+	}
+
+	DyeSwitch: {
+		DisplayName: Switch
+		Tooltip: Switch which mode the {$Items.Dye_Mixing_Vat_Item.DisplayName} is using
 	}
 }
