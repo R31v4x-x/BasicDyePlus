@@ -43,23 +43,30 @@ namespace BasicDyePlus {
 		}
 		/// <inheritdoc cref="StyleDimension.Set(float, float)"/>
 		public static UIElement SetLeft(this UIElement uiElement, float leftPx, float leftPer = 0) {
-			uiElement.Left.Set(leftPx * Main.inventoryScale, leftPer);
+			uiElement.Left.Set(leftPx, leftPer);
 			return uiElement;
 		}
 		/// <inheritdoc cref="StyleDimension.Set(float, float)"/>
 		public static UIElement SetTop(this UIElement uiElement, float topPx, float rightPer = 0) {
-			uiElement.Top.Set(topPx * Main.inventoryScale, rightPer);
+			uiElement.Top.Set(topPx, rightPer);
 			return uiElement;
 		}
 		/// <inheritdoc cref="StyleDimension.Set(float, float)"/>
 		public static UIElement SetWidth(this UIElement uiElement, float widthPx, float widthPer = 0) {
-			uiElement.Width.Set(widthPx * Main.inventoryScale, widthPer);
+			uiElement.Width.Set(widthPx, widthPer);
 			return uiElement;
 		}
 		/// <inheritdoc cref="StyleDimension.Set(float, float)"/>
 		public static UIElement SetHeight(this UIElement uiElement, float heightPx, float heightPer = 0) {
-			uiElement.Height.Set(heightPx * Main.inventoryScale, heightPer);
+			uiElement.Height.Set(heightPx, heightPer);
 			return uiElement;
+		}
+		public static UIElement SetMargins(this UIElement uIElement, float pixels) {
+			uIElement.MarginLeft = pixels;
+			uIElement.MarginTop = pixels;
+			uIElement.MarginRight = pixels;
+			uIElement.MarginBottom = pixels;
+			return uIElement;
 		}
 	}
 }

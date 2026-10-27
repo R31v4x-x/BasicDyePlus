@@ -11,7 +11,7 @@ using Terraria.ModLoader;
 using Terraria.ModLoader.IO;
 
 namespace BasicDyePlus.Items.Dyes {
-	public enum ModifiedType {
+	public enum ModifiedType : byte {
 		Mixed = 0,
 		Combo = 1,
 		None = 2,
@@ -43,7 +43,7 @@ namespace BasicDyePlus.Items.Dyes {
 		}
 		public override bool CanStack(Item source) {
 			Unmarked_Dye dye = source.ModItem as Unmarked_Dye;
-			return dye.PrimaryDye == PrimaryDye && dye.SecondaryDye == SecondaryDye && dye.PrimaryColor == PrimaryColor && dye.SecondaryColor == SecondaryColor && dye.Saturation == Saturation;
+			return dye.Modified == Modified && dye.PrimaryDye == PrimaryDye && dye.SecondaryDye == SecondaryDye && dye.PrimaryColor == PrimaryColor && dye.SecondaryColor == SecondaryColor && dye.Saturation == Saturation;
 		}
 		public override void ModifyTooltips(List<TooltipLine> tooltips) {
 			if (Modified != ModifiedType.None) {
@@ -79,9 +79,9 @@ namespace BasicDyePlus.Items.Dyes {
 			if (tag.TryGet(nameof(Modified), out byte type)) Modified = (ModifiedType)type;
 			else return;
 			PrimaryColor = tag.SafeGet(nameof(PrimaryColor), Color.Black.ToVector3());
-			PrimaryDye = (tag.SafeGet(nameof(PrimaryDye) + nameof(PrimaryDye.type), ItemID.None), tag.SafeGet(nameof(PrimaryDye) + nameof(PrimaryDye.Count), 0));
+			PrimaryDye = (tag.SafeGet(nameof(PrimaryDye) + nameof(PrimaryDye.type), (int)ItemID.None), tag.SafeGet(nameof(PrimaryDye) + nameof(PrimaryDye.Count), 0));
 			SecondaryColor = tag.SafeGet(nameof(SecondaryColor), Color.White.ToVector3());
-			SecondaryDye = (tag.SafeGet(nameof(SecondaryDye) + nameof(SecondaryDye.type), ItemID.None), tag.SafeGet(nameof(SecondaryDye) + nameof(SecondaryDye.Count), 0));
+			SecondaryDye = (tag.SafeGet(nameof(SecondaryDye) + nameof(SecondaryDye.type), (int)ItemID.None), tag.SafeGet(nameof(SecondaryDye) + nameof(SecondaryDye.Count), 0));
 			Saturation = tag.SafeGet(nameof(Saturation), 1f);
 		}
 		public override void NetSend(BinaryWriter writer) {

@@ -1,6 +1,10 @@
-﻿using BasicDyePlus.Items.Dyes;
+﻿using BasicDyePlus.Core;
+using BasicDyePlus.Items.Dyes;
 using BasicDyePlus.Tiles;
 using Microsoft.Xna.Framework.Graphics;
+using PegasusLib.Reflection;
+using PegasusLib.UI;
+using System;
 using System.Collections.Generic;
 using Terraria;
 using Terraria.GameContent;
@@ -17,6 +21,7 @@ namespace BasicDyePlus.UI {
 	public class Dye_Mixing_Vat_UI_System : ModSystem {
 		public UserInterface dyeMixingInterface;
 		public Dye_Mixing_UI dyeMixingUI;
+		public static ExpandableSet<bool> allowedShaders = new((shader) => ShaderDataMethods._passName.GetValue(shader) is "ArmorColored" or "WechoDye");
 
 		public void ShowMixingUI() {
 			dyeMixingInterface?.SetState(dyeMixingUI = new Dye_Mixing_UI());
@@ -52,9 +57,9 @@ namespace BasicDyePlus.UI {
 			}
 		}
 	}
-	public enum CombineMode {
-		Mixing = (byte)0,
-		Combo = (byte)1,
+	public enum CombineMode : byte {
+		Mixing = 0,
+		Combo = 1,
 	}
 	public class Dye_Mixing_UI : UIState {
 		public DyeSlot[] DyeSlot = new DyeSlot[3];
@@ -68,34 +73,33 @@ namespace BasicDyePlus.UI {
 
 			UIPanel panel = new DyePanel();
 			panel.SetPadding(8);
-			panel.SetRectangle(715.60614f, 269.3318f, (52 * 2) + 48, 173);
+			panel.SetRectangle(605.60614f, 239.33179f, (52 * 2) + 22, 165);
 
 			LocalizedText text = TileItem.Get<Dye_Mixing_Vat>().DisplayName;
-			Vector2 padding = ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, new Vector2(1.2f, 1) * Main.inventoryScale) + new Vector2(0, 4);
-			UIText label = new(text, 1.2f * Main.inventoryScale);
+			Vector2 padding = ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, Vector2.One) + new Vector2(0, 4);
+			UIText label = new(text);
 			label.SetLeft(0).SetTop(0);
 			label.IgnoresMouseInteraction = true;
 			panel.Append(label);
 
-			//panel.SetWidth(/*Math.Max(ChatManager.GetStringSize(FontAssets.MouseText.Value, text.Value, new Vector2(1.2f, 0)).X + 8, */(52 * 2) + 48);
+			panel.SetWidth(Math.Max(padding.X + 16, (52 * 2) + 22));
 
 			for (int i = 0; i < DyeSlot.Length; i++) {
 				DyeSlot[i] = new DyeSlot(items) { Index = i };
-				DyeSlot[i].Initialize();
 			}
-			DyeSlot[0].SetLeft(-28, 0.5f).SetTop(padding.Y);
-			DyeSlot[1].SetLeft(28, 0.5f).SetTop(padding.Y);
-			DyeSlot[2].SetLeft(-28, 0.5f).SetTop(padding.Y + 52 + 12);
+			DyeSlot[0].SetLeft(-28).SetTop(padding.Y).HAlign = 0.5f;
+			DyeSlot[1].SetLeft(28).SetTop(padding.Y).HAlign = 0.5f;
+			DyeSlot[2].SetLeft(-28).SetTop(padding.Y + 52 + 6).HAlign = 0.5f;
 			panel.Append(DyeSlot[0]);
 			panel.Append(DyeSlot[1]);
 			panel.Append(DyeSlot[2]);
 
-			DyeCombine combine = new(items, Mode);
-			combine.SetLeft(28, 0.5f).SetTop(padding.Y + 52 + 12).SetWidth(52).SetHeight(26);
+			DyeCombine combine = new(items, this);
+			combine.SetLeft(28).SetTop(padding.Y + 52 + 5).SetWidth(52 * Main.inventoryScale).SetHeight(26 * Main.inventoryScale).HAlign = 0.5f;
 			panel.Append(combine);
 			#endregion
 			DyeSwitch @switch = new(this);
-			@switch.SetLeft(28, 0.5f).SetTop(padding.Y + 52 + 12 + 26).SetWidth(52).SetHeight(26);
+			@switch.SetLeft(28).SetTop(padding.Y + 52 + 5 + 26).SetWidth(52 * Main.inventoryScale).SetHeight(26 * Main.inventoryScale).HAlign = 0.5f;
 			panel.Append(@switch);
 
 			Append(panel);
@@ -110,6 +114,9 @@ namespace BasicDyePlus.UI {
 		}
 	}
 	public class DyePanel : UIPanel {
+		public override void OnInitialize() {
+			UIDragController.Attach(this, new(StopClickThrough: true, ModifyOffset: (ref _) => { }));
+		}
 		public override void Update(GameTime gameTime) {
 			base.Update(gameTime);
 
@@ -122,7 +129,7 @@ namespace BasicDyePlus.UI {
 	public class DyeSlot(Item[] items) : UIElement {
 		public int Index;
 		public override void OnInitialize() {
-			this.SetWidth(52).SetHeight(52);
+			this.SetWidth(52 * Main.inventoryScale).SetHeight(52 * Main.inventoryScale);
 		}
 		public override void Update(GameTime gameTime) {
 			base.Update(gameTime);
@@ -135,7 +142,7 @@ namespace BasicDyePlus.UI {
 		public void HandleItemSlot() {
 			ItemSlot.MouseHover(items, ItemSlot.Context.EquipDye, Index);
 			if (Main.mouseItem.IsAir && items[Index].IsAir) Main.hoverItemName = this.UILocalization(Index).Value;
-			if ((Index != 2 && Main.mouseItem.dye > 0) || Main.mouseItem.IsAir) {
+			if ((Index != 2 && Main.mouseItem.dye > 0 && Dye_Mixing_Vat_UI_System.allowedShaders[Main.mouseItem.dye - 1]) || Main.mouseItem.IsAir) {
 				ItemSlot.LeftClick(items, ItemSlot.Context.InventoryItem, Index);
 				ItemSlot.RightClick(items, ItemSlot.Context.InventoryItem, Index);
 			}
@@ -163,34 +170,36 @@ namespace BasicDyePlus.UI {
 			);
 		}
 	}
-	public class DyeCombine(Item[] items, CombineMode mode) : UIButton<string>(string.Empty, 1.2f * Main.inventoryScale) {
+	public class DyeCombine(Item[] items, Dye_Mixing_UI ui) : UIButton<string>(string.Empty, 1.2f * Main.inventoryScale) {
 		public override void OnInitialize() {
 			HoverSound = SoundID.MenuTick;
 			ClickSound = SoundID.ResearchComplete;
-			HoverText = this.UILocalization($"{mode}.Tooltip").Format(UILocalization("DyeSlot.0"), UILocalization("DyeSlot.1"));
+			HoverText = this.UILocalization($"{ui.Mode}.Tooltip").Format(UILocalization("DyeSlot.0"), UILocalization("DyeSlot.1"));
 			TooltipText = true;
-			SetText(this.UILocalization($"{mode}.DisplayName").Value);
+			SetText(this.UILocalization($"{ui.Mode}.DisplayName").Value);
+		}
+		public override void Update(GameTime gameTime) {
+			HoverText = this.UILocalization($"{ui.Mode}.Tooltip").Format(UILocalization("DyeSlot.0"), UILocalization("DyeSlot.1"));
+			SetText(this.UILocalization($"{ui.Mode}.DisplayName").Value);
 		}
 		public override void LeftClick(UIMouseEvent evt) {
 			bool fail = false;
-			if (ContainsPoint(Main.MouseScreen)) {
-				if (items[2].IsAir && !items[0].IsAir && !items[1].IsAir) {
-					(int, int) GetItem(Item item) {
-						return (item.type, item.stack);
-					}
-					items[2].SetDefaults(ModContent.ItemType<Unmarked_Dye>());
-					items[2].newAndShiny = true;
-					items[2].value = (ContentSamples.ItemsByType[items[0].type].value * items[0].stack) + (ContentSamples.ItemsByType[items[1].type].value * items[1].stack);
-					Unmarked_Dye dye = items[2].ModItem as Unmarked_Dye;
-					dye.PrimaryDye = GetItem(items[0]);
-					dye.SecondaryDye = GetItem(items[1]);
-					dye.PrimaryColor = Color.Red.ToVector3();
-					dye.SecondaryColor = Color.Blue.ToVector3();
-					dye.Modified = (ModifiedType)mode;
-					items[0].SetDefaults();
-					items[1].SetDefaults();
-				} else fail = true;
-			}
+			if (items[2].IsAir && !items[0].IsAir && !items[1].IsAir) {
+				(int, int) GetItem(Item item) {
+					return (item.type, item.stack);
+				}
+				items[2].SetDefaults(ModContent.ItemType<Unmarked_Dye>());
+				items[2].newAndShiny = true;
+				items[2].value = (ContentSamples.ItemsByType[items[0].type].value * items[0].stack) + (ContentSamples.ItemsByType[items[1].type].value * items[1].stack);
+				Unmarked_Dye dye = items[2].ModItem as Unmarked_Dye;
+				dye.PrimaryDye = GetItem(items[0]);
+				dye.SecondaryDye = GetItem(items[1]);
+				dye.PrimaryColor = Color.Red.ToVector3();
+				dye.SecondaryColor = Color.Blue.ToVector3();
+				dye.Modified = (ModifiedType)ui.Mode;
+				items[0].SetDefaults();
+				items[1].SetDefaults();
+			} else fail = true;
 
 			if (fail) ClickSound = SoundID.MenuTick;
 			else ClickSound = SoundID.ResearchComplete;
@@ -208,9 +217,7 @@ namespace BasicDyePlus.UI {
 		public override void LeftClick(UIMouseEvent evt) {
 			base.LeftClick(evt);
 
-			if (ContainsPoint(Main.MouseScreen)) {
-				ui.Mode ^= CombineMode.Combo;
-			}
+			ui.Mode ^= CombineMode.Combo;
 		}
 	}
 }
